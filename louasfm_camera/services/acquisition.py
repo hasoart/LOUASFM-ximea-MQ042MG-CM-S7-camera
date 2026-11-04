@@ -15,6 +15,10 @@ from .storage import ImageWriter
 log = logging.getLogger(__name__)
 
 
+class CommandRejected(RuntimeError):
+    """A rejected user action has not changed the current camera configuration."""
+
+
 class AcquisitionService(QObject):
     devices_found = Signal(object)
     connected = Signal(object)
@@ -93,7 +97,7 @@ class AcquisitionService(QObject):
     def _handle(self, task, data):
         if task == "discover":
             if self.camera is not None:
-                raise RuntimeError("Сначала отключите камеру перед поиском")
+                raise CommandRejected("Сначала отключите камеру перед поиском")
             driver = create_camera(data.get("backend", self.backend))
             try:
                 self.devices_found.emit(driver.discover())
@@ -101,7 +105,7 @@ class AcquisitionService(QObject):
                 driver.close()
         elif task == "connect":
             if self.camera is not None:
-                raise RuntimeError("Камера уже подключена")
+                raise CommandRejected("Камера уже подключена")
             self.backend = data["backend"]
             driver = create_camera(self.backend)
             try:
@@ -126,13 +130,13 @@ class AcquisitionService(QObject):
             self.state_changed.emit("disconnected")
         elif task == "apply":
             if self.camera is None or self.streaming:
-                raise RuntimeError("Настройки применяются при остановленном захвате")
+                raise CommandRejected("Настройки применяются при остановленном захвате")
             self.settings, caps = self.camera.configure(data["settings"])
             self.actual_settings = self.settings
             self.settings_applied.emit(self.settings, caps)
         elif task == "start":
             if self.camera is None or self.streaming:
-                raise RuntimeError("Подключите камеру и остановите предыдущий захват")
+                raise CommandRejected("Подключите камеру и остановите предыдущий захват")
             self.settings, caps = self.camera.configure(data["settings"])
             self.actual_settings = self.settings
             self.settings_applied.emit(self.settings, caps)
@@ -146,13 +150,13 @@ class AcquisitionService(QObject):
         elif task == "save_current":
             frame = self.preview()
             if frame is None:
-                raise RuntimeError("Нет кадра для сохранения")
+                raise CommandRejected("Нет кадра для сохранения")
             self._save(frame, data["output"])
         elif task == "snap":
             if self.camera is None:
-                raise RuntimeError("Подключите камеру")
+                raise CommandRejected("Подключите камеру")
             if self.pending_save:
-                raise RuntimeError("Уже ожидается снимок")
+                raise CommandRejected("Уже ожидается снимок")
             if not self.streaming:
                 self.actual_settings, _ = self.camera.configure(replace(self.settings, trigger_mode="software"))
                 self.camera.start()
@@ -167,11 +171,11 @@ class AcquisitionService(QObject):
             self.output = data["output"]
         elif task == "simulate_external":
             if self.backend != "simulated" or self.camera is None:
-                raise RuntimeError("Доступно только для демонстрационной камеры")
+                raise CommandRejected("Доступно только для демонстрационной камеры")
             self.camera.simulate_external()
         elif task == "force_ip":
             if self.camera is not None:
-                raise RuntimeError("Сначала отключите камеру")
+                raise CommandRejected("Сначала отключите камеру")
             driver = create_camera("basler")
             try:
                 self.notice.emit(driver.force_ip(**data))
@@ -201,7 +205,9 @@ class AcquisitionService(QObject):
                         log.exception("Camera command %s failed", task)
                         # A failed configuration may leave partially changed hardware.
                         # Close it rather than advertise a valid prior configuration.
-                        if task in ("apply", "start", "snap", "stop", "disconnect") and self.camera is not None:
+                        if (not isinstance(error, CommandRejected)
+                                and task in ("apply", "start", "snap", "stop", "disconnect")
+                                and self.camera is not None):
                             try:
                                 self.camera.close()
                             except Exception:

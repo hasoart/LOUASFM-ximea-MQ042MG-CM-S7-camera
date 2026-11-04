@@ -142,3 +142,49 @@ def test_free_run_preview_latest_slot_is_bounded(tmp_path,wait):
     finally:
         service.request_close()
         assert service.wait_closed(5)
+
+
+def test_rejected_duplicate_start_does_not_interrupt_recording(tmp_path,wait):
+    service=AcquisitionService('simulated')
+    errors=[]
+    states=[]
+    service.error.connect(errors.append)
+    service.state_changed.connect(states.append)
+    settings=CameraSettings(width=32,height=24)
+    output={'directory':str(tmp_path),'image_format':'TIFF','prefix':'duplicate'}
+    try:
+        service.command('connect',backend='simulated',settings=settings)
+        wait(lambda: states and states[-1]=='idle')
+        service.command('start',settings=settings,output=output,record=True)
+        wait(lambda: states[-1]=='recording')
+        service.command('start',settings=settings,output=output,record=True)
+        wait(lambda: errors)
+        assert service.streaming and service.recording and service.camera is not None
+        service.command('simulate_external')
+        wait(lambda: service.counts()[1]==1)
+    finally:
+        service.request_close()
+        assert service.wait_closed(5)
+
+
+def test_disk_error_stops_recording(tmp_path,wait):
+    occupied=tmp_path/'not-directory'
+    occupied.write_text('occupied')
+    service=AcquisitionService('simulated')
+    errors=[]
+    states=[]
+    service.error.connect(errors.append)
+    service.state_changed.connect(states.append)
+    settings=CameraSettings(width=32,height=24)
+    try:
+        service.command('connect',backend='simulated',settings=settings)
+        wait(lambda: states and states[-1]=='idle')
+        service.command('start',settings=settings,output={'directory':str(occupied),'image_format':'TIFF','prefix':'error'},record=True)
+        wait(lambda: states[-1]=='recording')
+        service.command('simulate_external')
+        wait(lambda: errors and states[-1]=='idle')
+        assert not service.streaming
+        assert service.counts()[1]==0
+    finally:
+        service.request_close()
+        assert service.wait_closed(5)

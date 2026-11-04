@@ -36,7 +36,7 @@ def test_read_only_udp_handshake_and_large_reply():
         packet, address = server.recvfrom(65535)
         assert packet == b'Hi'
         server.sendto(b'Pulses {bad',address)
-        pulses = {f'D{i}': [[0,0],[600,1],[900,0]] for i in range(19)}
+        pulses = {f'D{i}': [[n*100, n%2] for n in range(20)] for i in range(19)}
         server.sendto(('Pulses '+json.dumps(pulses)).encode(), address)
         server.sendto(b'Cycle_finished {"t":1.0,"bad_cycle":false}',address)
         deadline = time.monotonic()+2

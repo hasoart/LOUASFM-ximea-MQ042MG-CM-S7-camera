@@ -73,10 +73,10 @@ class MainWindow(QMainWindow):
         self.start_action = toolbar.addAction("Запуск", self.start_capture)
         self.stop_action = toolbar.addAction("Стоп", lambda: self.issue("stop"))
         toolbar.addSeparator()
-        self.snap_action = toolbar.addAction("Снять и сохранить", lambda: self.issue("snap", output=self.output()))
+        self.snap_action = toolbar.addAction("Снять и сохранить", self.take_snapshot)
         self.save_action = toolbar.addAction("Сохранить последний кадр", lambda: self.issue("save_current", output=self.output()))
         help_menu = self.menuBar().addMenu("Справка")
-        help_menu.addAction("Инструкция (рус.)", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(ROOT/'README.md'))))
+        help_menu.addAction("Инструкция (рус.)", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(ROOT/'docs/START_HERE.html'))))
         help_menu.addAction("Особенности камеры", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(ROOT/'docs/CAMERA.md'))))
         help_menu.addAction("Официальная документация Basler", lambda: QDesktopServices.openUrl(QUrl("https://docs.baslerweb.com/aca2500-14gm")))
         self._connect_signals()
@@ -165,7 +165,7 @@ class MainWindow(QMainWindow):
         self.camera.force_ip.clicked.connect(self.force_ip)
         self.start_button.clicked.connect(self.start_capture)
         self.stop_button.clicked.connect(lambda: self.issue("stop"))
-        self.snap_button.clicked.connect(lambda: self.issue("snap", output=self.output()))
+        self.snap_button.clicked.connect(self.take_snapshot)
         self.save_button.clicked.connect(lambda: self.issue("save_current", output=self.output()))
         self.simulate_button.clicked.connect(lambda: self.issue("simulate_external"))
         self.board_connect.clicked.connect(self.connect_board)
@@ -231,6 +231,12 @@ class MainWindow(QMainWindow):
     def start_capture(self):
         if self.persist():
             self.issue("start", settings=self.camera.settings(), record=self.record.isChecked(), output=self.output())
+
+    def take_snapshot(self):
+        if self.persist():
+            if self.state == "idle":
+                self.issue("apply", settings=self.camera.settings())
+            self.issue("snap", output=self.output())
 
     def devices_found(self, devices):
         self.camera.show_devices(devices)
