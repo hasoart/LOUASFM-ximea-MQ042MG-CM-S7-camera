@@ -51,3 +51,9 @@ def test_read_only_udp_handshake_and_large_reply():
     finally:
         client.close()
         server.close()
+
+
+def test_forced_high_is_not_an_edge_every_cycle():
+    assert trigger_edges({'D2': [[0,1]]},'D2')==[]
+    assert trigger_edges({'D2': [[0,1],[100,0]]},'D2')==[0]
+    assert trigger_edges({'D2': [[0,0],[100,1]]},'D2','FallingEdge')==[0]

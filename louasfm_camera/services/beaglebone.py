@@ -57,8 +57,11 @@ def decode_message(packet):
 
 def trigger_edges(pulses, channel="D0", activation="RisingEdge"):
     result = []
-    previous = 0
-    for timestamp, level in pulses.get(channel, []):
+    edges = pulses.get(channel, [])
+    # In steady periodic operation the last level carries into the next cycle.
+    # A forced-HIGH channel is not a new edge at t=0 on every cycle.
+    previous = edges[-1][1] if edges else 0
+    for timestamp, level in edges:
         if activation == "RisingEdge" and previous == 0 and level == 1:
             result.append(timestamp)
         elif activation == "FallingEdge" and previous == 1 and level == 0:

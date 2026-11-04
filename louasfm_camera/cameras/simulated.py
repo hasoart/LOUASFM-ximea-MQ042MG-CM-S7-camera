@@ -32,7 +32,7 @@ class SimulatedCamera:
             raise ValueError("ROI выходит за границы демонстрационного сенсора")
         if settings.pixel_format not in ("Mono8", "Mono12", "Mono16"):
             raise ValueError("Демонстрационный драйвер: Mono8, Mono12, Mono16")
-        self.settings = replace(settings, width=width, height=height)
+        self.settings = replace(settings, width=width, height=height, gain=0 if settings.gain is None else settings.gain)
         return self.settings, {"pixel_formats": ["Mono8", "Mono12", "Mono16"],
                                "trigger_sources": ["Line1"], "gain_node": "DemoRaw",
                                "exposure_us": {"min": 35, "max": 999985},

@@ -133,7 +133,8 @@ class BaslerCamera:
         self._set("GainAuto", "Off", optional=True)
         self._set("ExposureMode", "Timed", optional=True)
         exposure = self._number(("ExposureTime", "ExposureTimeAbs"), settings.exposure_us)
-        gain = self._number(("Gain", "GainRaw"), settings.gain)
+        gain = self._number(("Gain", "GainRaw"), self._node("Gain", "GainRaw").GetMin()
+                            if settings.gain is None else settings.gain)
         for offset in ("OffsetX", "OffsetY"):
             self._number(offset, 0)
         # Shrink before binning to avoid a full-width ROI exceeding the new sensor width.
@@ -172,6 +173,10 @@ class BaslerCamera:
                 raise ValueError(f"Источник {source} недоступен; доступны: {sources}")
             self._set("TriggerSource", source)
             if settings.trigger_mode == "external":
+                if self._node("LineSelector", required=False) is not None:
+                    self._set("LineSelector", source)
+                    self._set("LineMode", "Input", optional=True)
+                    self._set("LineInverter", False, optional=True)
                 self._set("TriggerActivation", settings.trigger_activation)
             self._set("TriggerMode", "On")
         else:
@@ -184,7 +189,7 @@ class BaslerCamera:
         self.settings = replace(settings, exposure_us=exposure, gain=gain, width=width, height=height,
                                 offset_x=offset_x, offset_y=offset_y, packet_size=packet, inter_packet_delay=delay)
         capabilities = {"pixel_formats": [p for p in self._choices("PixelFormat") if p.startswith("Mono")],
-                        "trigger_sources": [s for s in sources if s != "Software"],
+                        "trigger_sources": [s for s in sources if s.startswith("Line")],
                         "exposure_us": self._range("ExposureTime", "ExposureTimeAbs"),
                         "gain": self._range("Gain", "GainRaw"),
                         "width": self._range("Width"), "height": self._range("Height"),

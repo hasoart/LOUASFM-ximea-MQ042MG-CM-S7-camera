@@ -59,6 +59,8 @@ class CameraPanel(QWidget):
         self.fields["exposure_us"] = decimal(1e8)
         self.fields["exposure_us"].setMinimum(0.001)
         self.fields["gain"] = decimal(10000)
+        self.fields["gain"].setMinimum(-1)
+        self.fields["gain"].setSpecialValueText("Минимум камеры")
         self.gain_label = QLabel("Усиление (единицы камеры)")
         self.fields["binning"] = integer(4, 1)
         for name in ("width", "height", "offset_x", "offset_y"):
@@ -134,7 +136,7 @@ class CameraPanel(QWidget):
             if isinstance(box, QComboBox):
                 values[name] = box.currentData() if name == "trigger_mode" else box.currentText()
             else:
-                values[name] = box.value()
+                values[name] = None if name == "gain" and box.value() == -1 else box.value()
         return CameraSettings(**values).validate()
 
     def set_settings(self, settings):
@@ -150,7 +152,7 @@ class CameraPanel(QWidget):
                             box.addItem(str(value))
                         box.setCurrentText(str(value))
                 else:
-                    box.setValue(value)
+                    box.setValue(-1 if name == "gain" and value is None else value)
         finally:
             self.updating = False
 

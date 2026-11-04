@@ -70,3 +70,21 @@ def test_force_ip_validation_never_calls_transport_for_bad_values():
                    ('001122334455','192.168.2.0','255.255.255.0')]:
         with pytest.raises(ValueError):
             camera.force_ip(*values)
+
+
+def test_classic_aliases_with_real_sdk_nodes():
+    class ClassicOnly(BaslerCamera):
+        def _node(self,*names,required=True):
+            names=tuple(name for name in names if name not in ('ExposureTime','Gain','AcquisitionFrameRate'))
+            return super()._node(*names,required=required)
+    camera=ClassicOnly()
+    try:
+        camera.open()
+        settings,caps=camera.configure(CameraSettings(width=64,height=48,trigger_mode='external'))
+        assert caps['exposure_us']['node']=='ExposureTimeAbs'
+        assert caps['gain_node']=='GainRaw'
+        assert settings.trigger_source=='Line1'
+        camera.start()
+        assert camera.read(30) is None  # An external camera must remain armed while idle.
+    finally:
+        camera.close()

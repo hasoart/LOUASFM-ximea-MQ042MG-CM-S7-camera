@@ -81,10 +81,10 @@ class AcquisitionService(QObject):
             self.saved.emit(path)
 
     def _stop(self):
-        if self.camera is not None:
-            self.camera.stop()
         was_single = self.single
         self.streaming = self.recording = self.single = self.pending_save = False
+        if self.camera is not None:
+            self.camera.stop()
         if was_single:
             self.actual_settings, caps = self.camera.configure(self.settings)
             self.settings_applied.emit(self.actual_settings, caps)
@@ -201,7 +201,7 @@ class AcquisitionService(QObject):
                         log.exception("Camera command %s failed", task)
                         # A failed configuration may leave partially changed hardware.
                         # Close it rather than advertise a valid prior configuration.
-                        if task in ("apply", "start", "snap") and self.camera is not None:
+                        if task in ("apply", "start", "snap", "stop", "disconnect") and self.camera is not None:
                             try:
                                 self.camera.close()
                             except Exception:
@@ -233,6 +233,12 @@ class AcquisitionService(QObject):
                             self._stop()
                         except Exception:
                             log.exception("Camera stop failed")
+                            try:
+                                self.camera.close()
+                            except Exception:
+                                log.exception("Camera close failed after acquisition error")
+                            self.camera = None
+                            self.state_changed.emit("disconnected")
                         self.error.emit(str(error))
         finally:
             try:

@@ -68,6 +68,13 @@ class MainWindow(QMainWindow):
         central.setSizes([430, 970])
         self.save_status = QLabel(f"Настройки: {store.path}")
         self.statusBar().addPermanentWidget(self.save_status)
+        toolbar = self.addToolBar("Захват")
+        toolbar.setMovable(False)
+        self.start_action = toolbar.addAction("Запуск", self.start_capture)
+        self.stop_action = toolbar.addAction("Стоп", lambda: self.issue("stop"))
+        toolbar.addSeparator()
+        self.snap_action = toolbar.addAction("Снять и сохранить", lambda: self.issue("snap", output=self.output()))
+        self.save_action = toolbar.addAction("Сохранить последний кадр", lambda: self.issue("save_current", output=self.output()))
         help_menu = self.menuBar().addMenu("Справка")
         help_menu.addAction("Инструкция (рус.)", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(ROOT/'README.md'))))
         help_menu.addAction("Особенности камеры", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(ROOT/'docs/CAMERA.md'))))
@@ -245,9 +252,13 @@ class MainWindow(QMainWindow):
         idle = state == "idle"
         streaming = state in ("streaming", "recording", "snapshot")
         self.start_button.setEnabled(idle)
+        self.start_action.setEnabled(idle)
         self.stop_button.setEnabled(streaming)
+        self.stop_action.setEnabled(streaming)
         self.snap_button.setEnabled(state != "disconnected" and state != "snapshot")
+        self.snap_action.setEnabled(self.snap_button.isEnabled())
         self.save_button.setEnabled(self.service.preview() is not None)
+        self.save_action.setEnabled(self.save_button.isEnabled())
         self.record.setEnabled(idle or state == "disconnected")
         for box in (self.output_directory, self.prefix, self.file_format):
             box.setEnabled(not streaming)
@@ -264,6 +275,7 @@ class MainWindow(QMainWindow):
             self.last_frame = frame
             self.image_view.show_frame(frame)
             self.save_button.setEnabled(not self.closing)
+            self.save_action.setEnabled(not self.closing)
         received, saved = self.service.counts()
         self.count_status.setText(f"Получено: {received} · Сохранено: {saved} · В очереди записи: {self.service.writer.queue.qsize()}")
 

@@ -10,7 +10,7 @@ import numpy as np
 @dataclass(frozen=True)
 class CameraSettings:
     exposure_us: float = 1000.0
-    gain: float = 0.0
+    gain: float | None = None  # None selects the camera's minimum native gain.
     width: int = 0  # Zero means full sensor after binning.
     height: int = 0
     offset_x: int = 0
@@ -27,7 +27,7 @@ class CameraSettings:
     def validate(self):
         if not math.isfinite(self.exposure_us) or self.exposure_us <= 0:
             raise ValueError("Экспозиция должна быть конечным положительным числом")
-        if not math.isfinite(self.gain) or self.gain < 0:
+        if self.gain is not None and (not math.isfinite(self.gain) or self.gain < 0):
             raise ValueError("Усиление должно быть конечным неотрицательным числом")
         for key in ("width", "height", "offset_x", "offset_y", "inter_packet_delay"):
             value = getattr(self, key)
@@ -43,6 +43,8 @@ class CameraSettings:
             raise ValueError("Эта программа поддерживает монохромные форматы Mono")
         if not self.trigger_source or not isinstance(self.trigger_source, str):
             raise ValueError("Нужен вход внешнего триггера")
+        if self.trigger_mode == "external" and not self.trigger_source.startswith("Line"):
+            raise ValueError("Для внешнего триггера выберите физический вход Line…")
         if not isinstance(self.packet_size, int) or not 576 <= self.packet_size <= 9000:
             raise ValueError("Размер пакета должен быть от 576 до 9000")
         if not math.isfinite(self.frame_rate) or self.frame_rate < 0:
