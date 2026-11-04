@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><title>LOUASFM — запуск камеры Basler</title>
+<style>body{font:17px/1.55 system-ui,sans-serif;max-width:1000px;margin:40px auto;padding:0 20px;color:#172234}pre{padding:18px;background:#edf2f7;overflow:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #cbd5df;padding:12px;text-align:left}a{color:#0862ac}h1,h2{line-height:1.2}</style>
+<h1>LOUASFM · Basler acA2500-14gm</h1>
+<p>Просмотр, настройка, одиночные снимки и запись кадров с аппаратным триггером. Windows x64 и Linux; Python 3.11 рекомендуется. Старые анализаторы сохранены в <code>legacy/</code> и пока не запускаются.</p>
+<h2>Windows: установить один раз</h2>
+<ol><li>Установите Python 3.11 x64 и <a href="https://www.baslerweb.com/en/software/downloads/software-downloads/">Basler pylon Software Suite</a> с GigE Camera Support и pylon Viewer.</li>
+<li>Проверьте камеру в pylon Viewer: питание, правильная подсеть, непрерывное изображение с отключённым триггером. Затем закройте камеру в Viewer.</li>
+<li>В PowerShell, открытом в папке программы, выполните:</li></ol>
+<pre>py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m louasfm_camera</pre>
+<p>После установки запускайте <code>run_windows.bat</code>. Для демонстрации: <code>run_windows.bat --demo</code>. Для установки из поставляемой папки wheels вместо команды pip выше:</p>
+<pre>.\.venv\Scripts\python.exe -m pip install --no-index --find-links .\vendor\wheels\windows -r requirements.txt</pre>
+<p>Wheels — Python-библиотеки; сетевой драйвер pylon устанавливается отдельно.</p>
+<h2>Linux: проверить без камеры</h2>
+<p>В подготовленной рабочей копии просто выполните:</p><pre>./run_linux.sh --demo</pre>
+<p>На другом компьютере:</p>
+<pre>python3.11 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m louasfm_camera --demo</pre>
+<h2>Подключение и снимок</h2>
+<ol><li>Выберите Basler / pypylon (или «Демонстрация без камеры»), нажмите «Найти», выберите камеру, затем «Подключить».</li>
+<li>Начните с Mono8, binning 1, экспозиции 1000 мкс = 1 мс, усиления «Минимум камеры». Ширина/высота 0 означают весь сенсор.</li>
+<li>Выберите каталог снимков. При остановленном захвате «Снять и сохранить» делает один программный снимок. «Сохранить последний кадр» не делает новую экспозицию.</li>
+<li>Для потока выберите «Непрерывный поток» и «Запуск». Для серии включите «Сохранять каждый полученный кадр» перед запуском.</li></ol>
+<h2>Внешний триггер от BeagleBone</h2>
+<p>Выберите «Внешний триггер», вход Line1 и нужный фронт, включите запись и нажмите «Запуск». Камера ждёт физического импульса. В этом режиме «Снять и сохранить» ждёт следующий физический триггер и не заменяет его программным. В демонстрации импульс создаётся кнопкой «Демо: внешний импульс».</p>
+<p>Распиновка и ток оптоизолированного входа требуют проверки по документации конкретной камеры. <a href="manufacturer/acA2500-14gm.html#connector-pinout">Локальная спецификация</a>. У модели rolling shutter; короткая вспышка может освещать строки неравномерно.</p>
+<h2>Схема BeagleBone</h2>
+<p>BBMain должен работать, его веб-страница <code>http://192.168.1.66:8081</code> должна быть открыта хотя бы раз. Во вкладке схемы задайте IP платы, <strong>UDP 9998</strong> и канал D0…D18/S0…S7; нажмите «Подключить BB». Выбор канала только подсвечивает график, а кабель подключается отдельно.</p>
+<p>Полная длительность цикла с пустыми стадиями и хвостом 10 мс в UDP не передаётся. Контекст BB в JSON снимка приблизительный; он не гарантирует привязку кадра к конкретному циклу.</p>
+<h2>Адреса и сохранение</h2>
+<p>IP камеры задаётся слева, IP BeagleBone — в другой вкладке. Пример для отдельной сети камеры: ПК 192.168.2.1/24, камера 192.168.2.10/24. Кнопка ForceIP назначает камере временный адрес при отключённом устройстве; настройки сетевой карты ПК меняются средствами ОС. Питание камеры: PoE либо 12 В через I/O, одновременно оба не применяются.</p>
+<p>Файлы: исходные TIFF/PNG и JSON рядом. Контраст и жёлтая ROI анализа не меняют записываемые пиксели. Изменения настроек сохраняются по Enter/выходу из поля; смотрите статус сохранения. Реальные настройки: <code>state/settings.json</code>, демонстрационные: <code>state/demo.json</code>.</p>
+<p>Закрытие окна останавливает камеру и дожидается очереди записи. BeagleBone продолжает работать. Ошибки — во вкладке «Журнал» и <code>state/camera.log</code>.</p>
+<p>Подробные инструкции: <a href="../README.md">README</a>, <a href="CAMERA.md">особенности камеры</a>, <a href="BEAGLEBONE.md">протокол BeagleBone</a>, <a href="TESTING.md">проверки и ограничения</a>. Оригинальное руководство: <a href="manufacturer/programmers_guide/01-pypylon-introduction.md">pypylon programmer’s guide</a>.</p>
+</html>
