@@ -72,3 +72,5 @@ result_images/
 temp_photos/
 .pytest_cache/
 .ruff_cache/
+vendor/wheels/
+artifacts/

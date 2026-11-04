@@ -1,2 +1,6 @@
-numpy
-pil
+# Python 3.11 x64 recommended; no global installs.
+PySide6-Essentials==6.12.0
+numpy==2.4.6
+pyqtgraph==0.14.0
+Pillow==12.3.0
+pypylon==4.2.0
