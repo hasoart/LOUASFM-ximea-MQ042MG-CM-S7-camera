@@ -1,107 +1,131 @@
-"""Download a small, attributed offline reference set from Basler's own sites."""
+"""Fetch an attributed offline reference set from official XIMEA pages/PDFs."""
+
 import argparse
-import base64
 from datetime import datetime, timezone
 import hashlib
 import html
 import json
 from pathlib import Path
 import re
+import shutil
+import subprocess
+import tempfile
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGES = {
-    "acA2500-14gm.html": "https://docs.baslerweb.com/aca2500-14gm",
-    "triggered-image-acquisition.html": "https://docs.baslerweb.com/triggered-image-acquisition",
-    "electronic-shutter-types.html": "https://docs.baslerweb.com/electronic-shutter-types.html",
-    "exposure-time.html": "https://docs.baslerweb.com/exposure-time",
-    "gain.html": "https://docs.baslerweb.com/gain",
-    "network-configuration.html": "https://docs.baslerweb.com/network-configuration-(gige-cameras)",
-    "pypylon-installation.html": "https://docs.baslerweb.com/pypylon-installation-and-environment-setup",
+    "MQ042MG-CM-S7.html": "https://www.ximea.com/products/usb-vision-industrial/xiq-usb3-compact-cmos-cameras/cmosis-cmv4000-spartan-7-usb3-mono-compact-camera",
+    "xiAPI-Python-manual.html": "https://www.ximea.com/support/wiki/apis/XiAPI_Python_Manual",
+    "xiAPI-manual.html": "https://www.ximea.com/support/wiki/apis/XiAPI_Manual",
+    "trigger-and-synchronization.html": "https://www.ximea.com/support/wiki/apis/XiAPI_Camera_Trigger_and_Synchronization_Signals",
+    "windows-software-package.html": "https://www.ximea.com/support/wiki/apis/XIMEA_Windows_Software_Package",
+    "linux-software-package.html": "https://www.ximea.com/support/wiki/apis/XIMEA_Linux_Software_Package",
+    "python-windows-installation.html": "https://www.ximea.com/support/wiki/apis/Python_inst_win",
+    "python-linux-installation.html": "https://www.ximea.com/support/wiki/apis/Python_inst_linux",
+    "software-downloads.html": "https://www.ximea.com/software-downloads",
 }
 FILES = {
-    "pypylon-LICENSE.txt": "https://raw.githubusercontent.com/basler/pypylon/master/LICENSE",
-}
-OPTIONAL_LEGACY_PDFS = {
-    "acA2500-14gm-EMVA1288.pdf": "https://www2.baslerweb.com/media/downloads/documents/emva_data/BD00056301_Basler_acA2500-14gm_EMVA_Standard_1288.pdf",
-    "pylon-Windows-installation-legacy.pdf": "https://www2.baslerweb.com/media/downloads/documents/users_manuals/AW00061112000_Install_and_Setup_Guide_pylon_Windows.pdf",
+    "xiq-s7-technical-manual.pdf": "https://www.ximea.com/downloads/documents-downloads/xiq-s7-usb3-vision-compact-cameras_technical-manual-dwl_manual-pdf",
 }
 
 
 def fetch(url):
-    with urlopen(Request(url, headers={"User-Agent": "LOUASFM-documentation-downloader/1.0"}), timeout=40) as response:
-        return response.read(), response.headers.get_content_type()
+    try:
+        with urlopen(Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=20) as response:
+            return response.read()
+    except Exception:
+        if not shutil.which("curl"):
+            raise
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "download"
+            subprocess.run(
+                [
+                    "curl",
+                    "--noproxy",
+                    "*",
+                    "--location",
+                    "--fail",
+                    "--silent",
+                    "--show-error",
+                    "--max-time",
+                    "90",
+                    "--user-agent",
+                    "Mozilla/5.0",
+                    "--output",
+                    str(output),
+                    url,
+                ],
+                check=True,
+            )
+            return output.read_bytes()
+
+
+def offline_html(data, url, stamp):
+    content = data.decode("utf-8")
+    # Preserve the original article content/styles, but remove scripts and forms.
+    content = re.sub(r"<script\b[^>]*>[\s\S]*?</script>", "", content, flags=re.I)
+    content = re.sub(r"<form\b[^>]*>[\s\S]*?</form>", "", content, flags=re.I)
+
+    def link(match):
+        attr, value = match.groups()
+        if value.startswith(("data:", "#", "mailto:", "javascript:")):
+            return match.group(0)
+        return f'{attr}="{html.escape(urljoin(url, html.unescape(value)), quote=True)}"'
+
+    content = re.sub(r'(href|src)="([^"]*)"', link, content)
+    banner = (
+        f'<div style="background:#edf2f7;padding:16px;color:#111;font:16px sans-serif">'
+        f"© XIMEA. Offline reference snapshot {stamp}. "
+        f'<a href="{html.escape(url)}">Original source</a>. External illustrations/links may require internet.</div>'
+    )
+    return re.sub(r"(<body\b[^>]*>)", lambda m: m.group(1) + banner, content, count=1, flags=re.I).encode("utf-8")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--destination", type=Path, default=ROOT/"docs/manufacturer")
-    parser.add_argument("--with-legacy-pdfs", action="store_true", help="Also try legacy www2.baslerweb.com PDF links")
+    parser.add_argument("--destination", type=Path, default=ROOT / "docs/manufacturer")
     args = parser.parse_args()
-    destination = args.destination
-    destination.mkdir(parents=True, exist_ok=True)
-    downloaded = []
-    failures = []
-    timestamp = datetime.now(timezone.utc).isoformat()
-    # Pin the guide to an upstream commit so the local snapshot is reproducible.
-    commit_data, _ = fetch("https://api.github.com/repos/basler/pypylon/commits/master")
-    revision = json.loads(commit_data)["sha"]
-    listing, _ = fetch("https://api.github.com/repos/basler/pypylon/contents/docs/programmers_guide?ref="+revision)
-    files = dict(FILES)
-    if args.with_legacy_pdfs:
-        files.update(OPTIONAL_LEGACY_PDFS)
-    for item in json.loads(listing):
-        if item["name"].endswith(".md"):
-            files["programmers_guide/"+item["name"]] = item["download_url"]
-    files["pypylon-LICENSE.txt"] = f"https://raw.githubusercontent.com/basler/pypylon/{revision}/LICENSE"
-    for name, url in {**PAGES, **files}.items():
+    args.destination.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).isoformat()
+    downloaded, failures = [], []
+    for name, url in {**PAGES, **FILES}.items():
         try:
-            data, content_type = fetch(url)
-            if name.endswith(".pdf") and not data.startswith(b"%PDF"):
-                raise ValueError("Server did not return a PDF")
-            if name in PAGES:
-                text = data.decode("utf-8")
-                match = re.search(r"<article\b[^>]*>([\s\S]*?)</article>", text)
-                if match is None:
-                    raise ValueError("Article section not found")
-                body = match.group(1)
-                # Keep article links absolute and embed article illustrations for offline reading.
-                def link(match):
-                    attribute, value = match.groups()
-                    absolute = urljoin(url, html.unescape(value))
-                    if attribute == "src" and not absolute.startswith("data:"):
-                        try:
-                            picture, mime = fetch(absolute)
-                            if mime.startswith("image/") and len(picture)<2_000_000:
-                                absolute = "data:"+mime+";base64,"+base64.b64encode(picture).decode()
-                        except Exception:
-                            pass
-                    return attribute+'="'+html.escape(absolute, quote=True)+'"'
-                body = re.sub(r'(href|src)="([^"]*)"', link, body)
-                body = re.sub(r'<script\b[^>]*>[\s\S]*?</script>', '', body)
-                text = ('<!doctype html><html lang="en"><meta charset="utf-8"><title>Basler reference</title>'
-                        '<style>body{max-width:1100px;margin:2em auto;font:16px sans-serif;line-height:1.5}'
-                        'table{border-collapse:collapse}td,th{border:1px solid #aaa;padding:6px}'
-                        'img{max-width:100%}pre{overflow:auto;background:#eee;padding:1em}</style>'
-                        f'<p>© Basler AG. Offline article snapshot {timestamp}. '
-                        f'<a href="{html.escape(url)}">Original source</a>. Links may require internet.</p>'
-                        +body+'</html>')
-                data = text.encode("utf-8")
-            target = destination/name
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(data)
-            downloaded.append({"file":name,"source":url,"sha256":hashlib.sha256(data).hexdigest(),
-                               "bytes":len(data),"downloaded_utc":timestamp})
-            print("Saved",name,len(data),flush=True)
+            original = fetch(url)
+            if name.endswith(".pdf") and not original.startswith(b"%PDF"):
+                raise ValueError("Not a PDF")
+            data = offline_html(original, url, stamp) if name in PAGES else original
+            (args.destination / name).write_bytes(data)
+            downloaded.append(
+                {
+                    "file": name,
+                    "source": url,
+                    "sha256": hashlib.sha256(data).hexdigest(),
+                    "bytes": len(data),
+                    "downloaded_utc": stamp,
+                }
+            )
+            print("Saved", name, len(data), flush=True)
         except Exception as error:
-            failures.append({"file":name,"source":url,"error":str(error)})
-            print("FAILED",name,error,flush=True)
-    manifest = {"upstream_pypylon_commit":revision,"files":downloaded,"failures":failures,
-                "optional_legacy_pdf_links":OPTIONAL_LEGACY_PDFS}
-    (destination/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
+            failures.append({"file": name, "source": url, "error": str(error)})
+            print("FAILED", name, str(error), flush=True)
+    license_path = args.destination / "XIMEA-SDK-LICENSE.txt"
+    if license_path.exists():
+        data = license_path.read_bytes()
+        downloaded.append(
+            {
+                "file": license_path.name,
+                "source": "https://www.ximea.com/attachment/Linux-SP-Stable.tgz",
+                "archive_member": "package/License.txt (SDK 4.34.00)",
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "bytes": len(data),
+                "downloaded_utc": stamp,
+            }
+        )
+    manifest = {"files": downloaded, "failures": failures}
+    (args.destination / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return bool(failures)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

@@ -104,9 +104,9 @@ def test_acquisition_copies_memory_and_pixel_metadata(camera, fmt, dtype):
 
 
 def test_unsupported_requested_downsampling_is_not_silently_ignored(camera):
-    with pytest.raises(XiError) as error:
+    with pytest.raises(RuntimeError, match="downsampling") as error:
         camera.configure(CameraSettings(binning=2))
-    assert error.value.status == 101
+    assert error.value.__cause__.status == 101
 
 
 def test_gap_in_frame_numbers_is_an_error_but_wrap_and_new_start_are_valid(camera):

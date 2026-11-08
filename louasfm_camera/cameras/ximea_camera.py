@@ -84,7 +84,7 @@ class XimeaCamera:
         except self.sdk.Xi_error as error:
             if optional and error.status in UNSUPPORTED:
                 return None
-            raise
+            raise RuntimeError(f"xiAPI: параметр {name}={value!r}: {error}") from error
 
     def _range(self, name):
         low = self._get(name + ":min")

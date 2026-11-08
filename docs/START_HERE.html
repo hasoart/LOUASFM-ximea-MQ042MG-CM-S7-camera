@@ -1,38 +1,36 @@
 <!doctype html>
-<html lang="ru"><meta charset="utf-8"><title>LOUASFM — запуск камеры Basler</title>
-<style>body{font:17px/1.55 system-ui,sans-serif;max-width:1000px;margin:40px auto;padding:0 20px;color:#172234}pre{padding:18px;background:#edf2f7;overflow:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #cbd5df;padding:12px;text-align:left}a{color:#0862ac}h1,h2{line-height:1.2}</style>
-<h1>LOUASFM · Basler acA2500-14gm</h1>
-<p>Просмотр, настройка, одиночные снимки и запись кадров с аппаратным триггером. Windows x64 и Linux; Python 3.11 рекомендуется. Старые анализаторы сохранены в <code>legacy/</code> и пока не запускаются.</p>
-<h2>Windows: установить один раз</h2>
-<ol><li>Установите Python 3.11 x64 и <a href="https://www.baslerweb.com/en/software/downloads/software-downloads/">Basler pylon Software Suite</a> с GigE Camera Support и pylon Viewer.</li>
-<li>Проверьте камеру в pylon Viewer: питание, правильная подсеть, непрерывное изображение с отключённым триггером. Затем закройте камеру в Viewer.</li>
-<li>В PowerShell, открытом в папке программы, выполните:</li></ol>
+<html lang="ru"><meta charset="utf-8"><title>LOUASFM — XIMEA CMV4000 USB3</title>
+<style>body{font:17px/1.55 system-ui,sans-serif;max-width:1050px;margin:40px auto;padding:0 20px;color:#172234}pre{padding:18px;background:#edf2f7;overflow:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #cbd5df;padding:12px;text-align:left}a{color:#0862ac}h1,h2{line-height:1.2}.notice{background:#fff2d7;border-left:5px solid #da8a00;padding:18px}</style>
+<h1>LOUASFM · XIMEA MQ042MG-CM-S7</h1>
+<p>Копия для CMOSIS CMV4000, 2048×2048, global shutter, USB3. Версия Basler сохранена отдельно. Интерфейс, снимки, запись и схема BeagleBone доступны на Windows/Linux. Для проверки без камеры есть демонстрация.</p>
+<div class="notice"><strong>До подключения аппаратного триггера:</strong> у S7 вход HIGH требует &gt;4 В и &gt;2 мА. Прямой GPIO BeagleBone 3,3 В не подходит. Нужен согласующий драйвер; 5 В на GPIO BeagleBone подавать нельзя. У стандартного S7 Binder/M5: контакт 1 — I/O GND, 3 — IN, 4 — OUT. Сверьте точную модель и рисунок в <a href="manufacturer/xiq-s7-technical-manual.pdf#page=48">официальном PDF, стр. 48–50</a>.</div>
+<h2>Windows: установка один раз</h2>
+<ol><li>Установите Python 3.11 x64.</li><li>Установите <a href="https://www.ximea.com/software-downloads">XIMEA Windows Software Package</a> с USB3/xiQ driver, xiAPI, <strong>xiAPI Python v3</strong>, xiCamTool и xiCOP. Оригинальный установщик также подготовлен в <code>vendor/sdk/XIMEA_Windows_SP_Stable.exe</code> отдельного архива SDK/wheels. Запустите его самостоятельно от администратора и при запросе перезагрузите Windows.</li>
+<li>Проверьте изображение в xiCamTool/xiCOP, затем закройте там захват.</li><li>В PowerShell, открытом в папке программы, выполните:</li></ol>
 <pre>py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe scripts\configure_ximea_sdk.py --sdk-root "C:\XIMEA" --check
 .\.venv\Scripts\python.exe -m louasfm_camera</pre>
-<p>После установки запускайте <code>run_windows.bat</code>. Для демонстрации: <code>run_windows.bat --demo</code>. Для установки из поставляемой папки wheels вместо команды pip выше:</p>
-<pre>.\.venv\Scripts\python.exe -m pip install --no-index --find-links .\vendor\wheels\windows -r requirements.txt</pre>
-<p>Wheels — Python-библиотеки; сетевой драйвер pylon устанавливается отдельно.</p>
-<h2>Linux: проверить без камеры</h2>
-<p>В подготовленной рабочей копии просто выполните:</p><pre>./run_linux.sh --demo</pre>
-<p>На другом компьютере:</p>
-<pre>python3.11 -m venv .venv
+<p>Замените <code>C:\XIMEA</code>, если SDK установлен в другом месте. Поддерживается также путь <code>API\Python\v3</code>, содержащий папку <code>ximea</code>. Модуль и DLL производителя не меняются, путь сохраняется только для этой копии проекта. <strong>Одни Python-зависимости не устанавливают SDK и драйвер камеры.</strong></p>
+<p>Следующие запуски — <code>run_windows.bat</code>. Проверка без SDK: <code>run_windows.bat --demo</code>. Активация venv необязательна.</p>
+<p>Для установки Python-пакетов из подготовленного архива без интернета распакуйте SDK/wheels поверх программы и замените обычную команду pip на:</p>
+<pre>.\.venv\Scripts\python.exe -m pip install --no-index --find-links vendor\wheels\windows -r requirements.txt</pre>
+<p>Установщик SDK всё равно запускается отдельно. Старый pylon для этой копии не нужен.</p>
+<h2>Linux: попробовать сейчас</h2>
+<p>В подготовленной рабочей копии:</p><pre>./run_linux.sh --demo</pre>
+<p>На другой машине:</p><pre>python3.11 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python -m louasfm_camera --demo</pre>
-<h2>Подключение и снимок</h2>
-<ol><li>Выберите Basler / pypylon (или «Демонстрация без камеры»), нажмите «Найти», выберите камеру, затем «Подключить».</li>
-<li>Начните с Mono8, binning 1, экспозиции 1000 мкс = 1 мс, усиления «Минимум камеры». Ширина/высота 0 означают весь сенсор.</li>
-<li>Выберите каталог снимков. При остановленном захвате «Снять и сохранить» делает один программный снимок. «Сохранить последний кадр» не делает новую экспозицию.</li>
-<li>Для потока выберите «Непрерывный поток» и «Запуск». Для серии включите «Сохранять каждый полученный кадр» перед запуском.</li></ol>
-<h2>Внешний триггер от BeagleBone</h2>
-<p>Выберите «Внешний триггер», вход Line1 и нужный фронт, включите запись и нажмите «Запуск». Камера ждёт физического импульса. В этом режиме «Снять и сохранить» ждёт следующий физический триггер и не заменяет его программным. В демонстрации импульс создаётся кнопкой «Демо: внешний импульс».</p>
-<p>Распиновка и ток оптоизолированного входа требуют проверки по документации конкретной камеры. <a href="manufacturer/acA2500-14gm.html#connector-pinout">Локальная спецификация</a>. У модели rolling shutter; короткая вспышка может освещать строки неравномерно.</p>
-<h2>Схема BeagleBone</h2>
-<p>BBMain должен работать, его веб-страница <code>http://192.168.1.66:8081</code> должна быть открыта хотя бы раз. Во вкладке схемы задайте IP платы, <strong>UDP 9998</strong> и канал D0…D18/S0…S7; нажмите «Подключить BB». Выбор канала только подсвечивает график, а кабель подключается отдельно.</p>
-<p>Полная длительность цикла с пустыми стадиями и хвостом 10 мс в UDP не передаётся. Контекст BB в JSON снимка приблизительный; он не гарантирует привязку кадра к конкретному циклу.</p>
-<h2>Адреса и сохранение</h2>
-<p>IP камеры задаётся слева, IP BeagleBone — в другой вкладке. Пример для отдельной сети камеры: ПК 192.168.2.1/24, камера 192.168.2.10/24. Кнопка ForceIP назначает камере временный адрес при отключённом устройстве; настройки сетевой карты ПК меняются средствами ОС. Питание камеры: PoE либо 12 В через I/O, одновременно оба не применяются.</p>
-<p>Файлы: исходные TIFF/PNG и JSON рядом. Контраст и жёлтая ROI анализа не меняют записываемые пиксели. Изменения настроек сохраняются по Enter/выходу из поля; смотрите статус сохранения. Реальные настройки: <code>state/settings.json</code>, демонстрационные: <code>state/demo.json</code>.</p>
-<p>Закрытие окна останавливает камеру и дожидается очереди записи. BeagleBone продолжает работать. Ошибки — во вкладке «Журнал» и <code>state/camera.log</code>.</p>
-<p>Подробные инструкции: <a href="../README.md">README</a>, <a href="CAMERA.md">особенности камеры</a>, <a href="BEAGLEBONE.md">протокол BeagleBone</a>, <a href="TESTING.md">проверки и ограничения</a>. Оригинальное руководство: <a href="manufacturer/programmers_guide/01-pypylon-introduction.md">pypylon programmer’s guide</a>.</p>
+<p>Для физической камеры установите официальный Linux SDK и USB permissions, зарегистрируйте его путь и уберите <code>--demo</code>. SDK Python 4.34 требует системную native-библиотеку; одной распаковки в venv недостаточно. Подробнее <a href="SDK_SETUP.md">SDK_SETUP.md</a>.</p>
+<h2>Первая проверка</h2>
+<ol><li>Слева выберите XIMEA / xiAPI (USB3), «Найти», камеру по serial, «Подключить». Для демонстрации выберите соответствующий драйвер.</li><li>Начальные параметры: binning 1, ширина/высота 0, offset 0, экспозиция 1000 мкс, gain «Минимум камеры», АЦП 10 бит, Mono8. Неподдерживаемые значения вызывают ошибку; реальные диапазоны читаются из камеры.</li><li>Выберите каталог снимков. «Снять и сохранить» из остановленного состояния выполняет один программный снимок и возвращает прежний режим.</li><li>Проверьте Raw16. TIFF/PNG сохраняют uint16-контейнер, но у этой модели 10 бит АЦП. Контраст и жёлтая ROI не меняют записываемые значения.</li><li>Для серии включите «Сохранять каждый полученный кадр» перед запуском. Начните с free run, лимита 10 FPS и короткой записи на локальный диск.</li></ol>
+<table><tr><th>Кнопка / режим</th><th>Действие</th></tr><tr><td>Запуск, External</td><td>Ожидание GPI1 с выбранным фронтом. Без импульсов окно остаётся активным.</td></tr><tr><td>Запуск, Software</td><td>Ожидание кнопки одиночного снимка.</td></tr><tr><td>Снять и сохранить во время External</td><td>Ожидается следующий физический импульс, режим не подменяется.</td></tr><tr><td>Сохранить последний кадр</td><td>Новая экспозиция не запускается.</td></tr><tr><td>Стоп / закрытие</td><td>Камера останавливается; принятые задания записи дописываются.</td></tr></table>
+<p>В демонстрации внешний импульс создаёт кнопка «Демо: внешний импульс». В реальном режиме это физический сигнал через проверенный согласующий драйвер. Ускорять опыт следует после проверки очереди, диска и счётчиков: 90 FPS не гарантированы для 16-битного результата.</p>
+<h2>BeagleBone</h2>
+<p>Камера подключена по USB3: её IP настраивать не требуется. IP платы задаётся отдельно: например <code>192.168.1.66</code>, <strong>UDP 9998</strong>. Сначала запустите BBMain и откройте <code>http://192.168.1.66:8081</code> хотя бы один раз. Затем подключите BB во вкладке схемы и выберите физически используемый D0/D2.</p>
+<p>Канал графика только подсвечивает схему; GPI1/полярность применяются к камере. Полная длительность пустых стадий и хвост 10 мс в UDP не передаются. Контекст в JSON приблизительный: не гарантирует точное соответствие кадра циклу. Закрытие камеры не останавливает BeagleBone.</p>
+<h2>Настройки и ошибки</h2>
+<p>Проверяйте «Настройки сохранены». Файлы этой копии: <code>state/settings.json</code>, демо — <code>state/demo.json</code>, SDK-путь — <code>state/ximea-sdk-path.txt</code>. Старый конфиг Basler не переносите. Ошибки — в «Журнале» и <code>state/camera.log</code>; диагностика:</p>
+<pre>.\.venv\Scripts\python.exe scripts\diagnose.py</pre>
+<p><a href="../README.md">Подробная инструкция</a> · <a href="CAMERA.md">Сенсор, GPIO и скорость</a> · <a href="BEAGLEBONE.md">BeagleBone</a> · <a href="TESTING.md">Что проверено</a> · <a href="manufacturer/xiAPI-Python-manual.html">Официальный Python manual</a>.</p>
 </html>
