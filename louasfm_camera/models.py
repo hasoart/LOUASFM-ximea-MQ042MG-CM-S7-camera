@@ -18,10 +18,9 @@ class CameraSettings:
     binning: int = 1
     pixel_format: str = "Mono8"
     trigger_mode: str = "external"  # free, software, external
-    trigger_source: str = "Line1"
+    trigger_source: str = "GPI1"
     trigger_activation: str = "RisingEdge"
-    packet_size: int = 1500
-    inter_packet_delay: int = 0
+    sensor_bits: int = 10  # CMV4000 ADC precision; container may still be uint16.
     frame_rate: float = 0.0  # Zero disables the optional rate limiter.
 
     def validate(self):
@@ -29,7 +28,7 @@ class CameraSettings:
             raise ValueError("Экспозиция должна быть конечным положительным числом")
         if self.gain is not None and (not math.isfinite(self.gain) or self.gain < 0):
             raise ValueError("Усиление должно быть конечным неотрицательным числом")
-        for key in ("width", "height", "offset_x", "offset_y", "inter_packet_delay"):
+        for key in ("width", "height", "offset_x", "offset_y"):
             value = getattr(self, key)
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise ValueError(f"{key}: требуется целое неотрицательное число")
@@ -39,14 +38,14 @@ class CameraSettings:
             raise ValueError("Неизвестный режим триггера")
         if self.trigger_activation not in ("RisingEdge", "FallingEdge"):
             raise ValueError("Неизвестная полярность триггера")
-        if not self.pixel_format.startswith("Mono"):
-            raise ValueError("Эта программа поддерживает монохромные форматы Mono")
+        if self.pixel_format not in ("Mono8", "Mono16", "Raw8", "Raw16"):
+            raise ValueError("Эта программа поддерживает Mono8/Mono16/Raw8/Raw16")
         if not self.trigger_source or not isinstance(self.trigger_source, str):
             raise ValueError("Нужен вход внешнего триггера")
-        if self.trigger_mode == "external" and not self.trigger_source.startswith("Line"):
-            raise ValueError("Для внешнего триггера выберите физический вход Line…")
-        if not isinstance(self.packet_size, int) or not 576 <= self.packet_size <= 9000:
-            raise ValueError("Размер пакета должен быть от 576 до 9000")
+        if self.trigger_mode == "external" and not (self.trigger_source.startswith("GPI") and self.trigger_source[3:].isdigit() and int(self.trigger_source[3:]) > 0):
+            raise ValueError("Для внешнего триггера выберите физический вход GPI…")
+        if self.sensor_bits not in (8, 10):
+            raise ValueError("CMV4000: выберите 8 или 10 бит АЦП")
         if not math.isfinite(self.frame_rate) or self.frame_rate < 0:
             raise ValueError("Ограничение частоты должно быть конечным и неотрицательным")
         return self

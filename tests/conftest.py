@@ -3,7 +3,6 @@ import time
 import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-os.environ.setdefault("PYLON_CAMEMU", "1")
 os.environ["PYQTGRAPH_QT_LIB"] = "PySide6"
 
 

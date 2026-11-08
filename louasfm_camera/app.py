@@ -11,7 +11,7 @@ from .config import ConfigStore, DEFAULT_PATH
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="LOUASFM Basler acA2500-14gm camera")
+    parser = argparse.ArgumentParser(description="LOUASFM XIMEA MQ042MG-CM-S7 camera")
     parser.add_argument("--demo", action="store_true", help="Демонстрация без камеры, отдельные настройки")
     parser.add_argument("--config", type=Path, help="Файл настроек JSON")
     parser.add_argument("--smoke-seconds", type=float, help="Автоматически закрыть GUI после N секунд")
@@ -25,7 +25,7 @@ def main(argv=None):
         return 2
     if args.demo:
         config["backend"] = "simulated"
-        config["camera_serial"] = config["camera_ip"] = ""
+        config["camera_serial"] = ""
     log_dir = store.path.parent
     log_dir.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s",
@@ -36,7 +36,7 @@ def main(argv=None):
     from PySide6.QtWidgets import QApplication
     from .ui.main_window import MainWindow
     app = QApplication(sys.argv[:1])
-    app.setApplicationName("LOUASFM Basler Camera")
+    app.setApplicationName("LOUASFM XIMEA Camera")
     window = MainWindow(store, config)
     signal.signal(signal.SIGINT, lambda *_: window.close())
     signal.signal(signal.SIGTERM, lambda *_: window.close())

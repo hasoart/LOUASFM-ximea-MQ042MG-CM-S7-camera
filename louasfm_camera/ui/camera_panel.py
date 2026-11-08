@@ -1,8 +1,18 @@
 """Camera widgets only; device operations are requested by the main window."""
+
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import (QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
-                              QFormLayout, QHBoxLayout, QLabel, QLineEdit,
-                              QPushButton, QSpinBox, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (
+    QComboBox,
+    QDoubleSpinBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
 from ..models import CameraSettings, settings_dict
 
 
@@ -29,7 +39,7 @@ class CameraPanel(QWidget):
         layout = QVBoxLayout(self)
         form = QFormLayout()
         self.backend = QComboBox()
-        self.backend.addItem("Basler / pypylon", "basler")
+        self.backend.addItem("XIMEA / xiAPI (USB3)", "ximea")
         self.backend.addItem("Демонстрация без камеры", "simulated")
         self.backend.setCurrentIndex(self.backend.findData(config["backend"]))
         form.addRow("Драйвер", self.backend)
@@ -37,10 +47,7 @@ class CameraPanel(QWidget):
         form.addRow("Найденные камеры", self.devices)
         self.serial = QLineEdit(config["camera_serial"])
         self.serial.setPlaceholderText("Пусто: единственная найденная камера")
-        self.ip = QLineEdit(config["camera_ip"])
-        self.ip.setPlaceholderText("IP камеры, например 192.168.2.10")
         form.addRow("Серийный номер", self.serial)
-        form.addRow("IP камеры", self.ip)
         self.search = QPushButton("Найти")
         self.connect_button = QPushButton("Подключить")
         self.disconnect_button = QPushButton("Отключить")
@@ -49,8 +56,6 @@ class CameraPanel(QWidget):
             buttons.addWidget(button)
         layout.addLayout(form)
         layout.addLayout(buttons)
-        self.force_ip = QPushButton("Временный IP камеры (ForceIP)…")
-        layout.addWidget(self.force_ip)
         self.description = QLabel("Камера отключена")
         self.description.setWordWrap(True)
         layout.addWidget(self.description)
@@ -68,36 +73,53 @@ class CameraPanel(QWidget):
         self.fields["width"].setSpecialValueText("Весь сенсор")
         self.fields["height"].setSpecialValueText("Весь сенсор")
         pixel_format = QComboBox()
-        pixel_format.addItems(["Mono8", "Mono12", "Mono12Packed", "Mono16"])
+        pixel_format.addItems(["Mono8", "Mono16", "Raw8", "Raw16"])
         pixel_format.setEditable(True)
         self.fields["pixel_format"] = pixel_format
         trigger = QComboBox()
-        for label, value in (("Внешний триггер", "external"), ("Программный триггер", "software"), ("Непрерывный поток", "free")):
+        for label, value in (
+            ("Внешний триггер", "external"),
+            ("Программный триггер", "software"),
+            ("Непрерывный поток", "free"),
+        ):
             trigger.addItem(label, value)
         self.fields["trigger_mode"] = trigger
         source = QComboBox()
-        source.addItem("Line1")
+        source.addItem("GPI1")
         source.setEditable(True)
         self.fields["trigger_source"] = source
         activation = QComboBox()
         activation.addItems(["RisingEdge", "FallingEdge"])
         self.fields["trigger_activation"] = activation
-        self.fields["packet_size"] = integer(9000, 576)
-        self.fields["inter_packet_delay"] = integer(1000000000)
+        bits = QComboBox()
+        bits.addItem("8", 8)
+        bits.addItem("10", 10)
+        self.fields["sensor_bits"] = bits
         self.fields["frame_rate"] = decimal(100000)
         self.fields["frame_rate"].setSpecialValueText("Без ограничителя")
-        labels = {"exposure_us": "Экспозиция, мкс", "gain": self.gain_label,
-                  "binning": "Binning X и Y", "width": "Ширина ROI камеры", "height": "Высота ROI камеры",
-                  "offset_x": "Смещение X", "offset_y": "Смещение Y", "pixel_format": "Формат пикселя",
-                  "trigger_mode": "Захват", "trigger_source": "Вход триггера",
-                  "trigger_activation": "Фронт триггера", "packet_size": "GigE пакет, байт",
-                  "inter_packet_delay": "GigE задержка, ticks", "frame_rate": "Ограничитель FPS (0 = выкл.)"}
+        labels = {
+            "exposure_us": "Экспозиция, мкс",
+            "gain": self.gain_label,
+            "binning": "Binning X и Y",
+            "width": "Ширина ROI камеры",
+            "height": "Высота ROI камеры",
+            "offset_x": "Смещение X",
+            "offset_y": "Смещение Y",
+            "pixel_format": "Формат пикселя",
+            "trigger_mode": "Захват",
+            "trigger_source": "Вход триггера",
+            "trigger_activation": "Фронт триггера",
+            "sensor_bits": "Биты АЦП (8 / 10)",
+            "frame_rate": "Ограничитель FPS (0 = выкл.)",
+        }
         for name, box in self.fields.items():
             settings_form.addRow(labels[name], box)
         layout.addLayout(settings_form)
         self.apply = QPushButton("Применить к камере")
         layout.addWidget(self.apply)
-        hint = QLabel("Изменения сохраняются после Enter/выхода из поля.\nК камере применяются по кнопке «Применить» или при запуске.\nНоль ширины/высоты — весь сенсор после binning.")
+        hint = QLabel(
+            "Изменения сохраняются после Enter/выхода из поля.\nК камере применяются по кнопке «Применить» или при запуске.\nНоль ширины/высоты — весь сенсор после binning."
+        )
         hint.setWordWrap(True)
         layout.addWidget(hint)
         layout.addStretch()
@@ -108,7 +130,6 @@ class CameraPanel(QWidget):
             else:
                 box.editingFinished.connect(self._changed)
         self.serial.editingFinished.connect(self._changed)
-        self.ip.editingFinished.connect(self._changed)
         self.devices.currentIndexChanged.connect(self._select_device)
 
     def _changed(self, *args):
@@ -119,14 +140,13 @@ class CameraPanel(QWidget):
         data = self.devices.itemData(index)
         if data:
             self.serial.setText(data["serial"])
-            self.ip.setText(data.get("ip", "") if data.get("ip") != "—" else "")
             self._changed()
 
     def show_devices(self, devices):
         self.devices.clear()
         self.devices.addItem("Выберите камеру…", None)
         for device in devices:
-            self.devices.addItem(f"{device['model']} / {device['serial']} / {device.get('ip', '')}", device)
+            self.devices.addItem(f"{device['model']} / {device['serial']} / {device.get('transport', 'USB3')}", device)
         if len(devices) == 1:
             self.devices.setCurrentIndex(1)
 
@@ -134,7 +154,7 @@ class CameraPanel(QWidget):
         values = {}
         for name, box in self.fields.items():
             if isinstance(box, QComboBox):
-                values[name] = box.currentData() if name == "trigger_mode" else box.currentText()
+                values[name] = box.currentData() if name in ("trigger_mode", "sensor_bits") else box.currentText()
             else:
                 values[name] = None if name == "gain" and box.value() == -1 else box.value()
         return CameraSettings(**values).validate()
@@ -145,7 +165,7 @@ class CameraPanel(QWidget):
             for name, value in settings_dict(settings).items():
                 box = self.fields[name]
                 if isinstance(box, QComboBox):
-                    if name == "trigger_mode":
+                    if name in ("trigger_mode", "sensor_bits"):
                         box.setCurrentIndex(box.findData(value))
                     else:
                         if box.findText(str(value)) < 0:
@@ -167,8 +187,7 @@ class CameraPanel(QWidget):
                     box.clear()
                     box.addItems(values)
                     box.setCurrentText(current if current in values else values[0])
-            node = caps.get("gain_node", "Gain")
-            self.gain_label.setText(f"Усиление ({'Raw' if 'Raw' in node else 'dB / единицы камеры'})")
+            self.gain_label.setText("Усиление, дБ")
             for name in ("exposure_us", "gain", "width", "height", "binning"):
                 bounds = caps.get(name, {})
                 box = self.fields[name]
@@ -179,30 +198,9 @@ class CameraPanel(QWidget):
     def set_state(self, state):
         disconnected = state == "disconnected"
         idle = state == "idle"
-        for box in (self.backend, self.serial, self.ip, self.search, self.devices, self.force_ip, self.connect_button):
+        for box in (self.backend, self.serial, self.search, self.devices, self.connect_button):
             box.setEnabled(disconnected)
         self.disconnect_button.setEnabled(not disconnected)
         self.apply.setEnabled(idle)
         for box in self.fields.values():
             box.setEnabled(disconnected or idle)
-
-
-class ForceIPDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Временный адрес Basler GigE")
-        layout = QFormLayout(self)
-        label = QLabel("Камера должна быть отключена в приложении и pylon Viewer.\nАдрес сбросится после отключения питания камеры.\nЗдесь меняется только IP камеры; сетевую карту ПК настройте отдельно.")
-        label.setWordWrap(True)
-        layout.addRow(label)
-        self.fields = {"mac": QLineEdit(), "address": QLineEdit(),
-                       "mask": QLineEdit("255.255.255.0"), "gateway": QLineEdit("0.0.0.0")}
-        for key, title in (("mac", "MAC камеры"), ("address", "Новый IP"), ("mask", "Маска"), ("gateway", "Шлюз")):
-            layout.addRow(title, self.fields[key])
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Apply | QDialogButtonBox.StandardButton.Cancel)
-        buttons.button(QDialogButtonBox.StandardButton.Apply).clicked.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addRow(buttons)
-
-    def values(self):
-        return {key: box.text().strip() for key, box in self.fields.items()}

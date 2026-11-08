@@ -29,7 +29,7 @@ class AcquisitionService(QObject):
     saved = Signal(str)
     closed = Signal()
 
-    def __init__(self, backend="basler", parent=None):
+    def __init__(self, backend="ximea", parent=None):
         super().__init__(parent)
         self.backend = backend
         self.commands = queue.Queue(maxsize=32)
@@ -109,7 +109,7 @@ class AcquisitionService(QObject):
             self.backend = data["backend"]
             driver = create_camera(self.backend)
             try:
-                info = driver.open(data.get("serial", ""), data.get("ip", ""))
+                info = driver.open(data.get("serial", ""))
                 settings, caps = driver.configure(data["settings"])
             except Exception:
                 driver.close()
@@ -173,14 +173,6 @@ class AcquisitionService(QObject):
             if self.backend != "simulated" or self.camera is None:
                 raise CommandRejected("Доступно только для демонстрационной камеры")
             self.camera.simulate_external()
-        elif task == "force_ip":
-            if self.camera is not None:
-                raise CommandRejected("Сначала отключите камеру")
-            driver = create_camera("basler")
-            try:
-                self.notice.emit(driver.force_ip(**data))
-            finally:
-                driver.close()
         else:
             raise ValueError(f"Неизвестная команда: {task}")
 

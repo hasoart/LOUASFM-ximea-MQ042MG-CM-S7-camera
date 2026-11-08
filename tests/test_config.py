@@ -31,7 +31,7 @@ def test_corrupt_settings_never_overwritten(tmp_path):
 
 @pytest.mark.parametrize("change", [{"exposure_us": float("nan")}, {"width": -1},
                                     {"trigger_mode": "bad"}, {"binning": 0},
-                                    {"gain": float("inf")}, {"packet_size": 9500}])
+                                    {"gain": float("inf")}, {"sensor_bits": 12}])
 def test_settings_validation(change):
     data = CameraSettings().__dict__.copy()
     data.update(change)

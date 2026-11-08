@@ -16,9 +16,9 @@ class SimulatedCamera:
         self.rng = np.random.default_rng(1234)
 
     def discover(self):
-        return [{"serial": "DEMO-001", "model": "Демонстрационная камера", "ip": "—"}]
+        return [{"serial": "DEMO-001", "model": "Демонстрационная камера", "transport": "DEMO"}]
 
-    def open(self, serial="", ip=""):
+    def open(self, serial=""):
         self.opened = True
         return self.discover()[0]
 
@@ -28,14 +28,14 @@ class SimulatedCamera:
         settings.validate()
         width = settings.width or 640 // settings.binning
         height = settings.height or 480 // settings.binning
-        if width + settings.offset_x > 2592 // settings.binning or height + settings.offset_y > 1942 // settings.binning:
+        if width + settings.offset_x > 2048 // settings.binning or height + settings.offset_y > 2048 // settings.binning:
             raise ValueError("ROI выходит за границы демонстрационного сенсора")
-        if settings.pixel_format not in ("Mono8", "Mono12", "Mono16"):
-            raise ValueError("Демонстрационный драйвер: Mono8, Mono12, Mono16")
+        if settings.pixel_format not in ("Mono8", "Mono16", "Raw8", "Raw16"):
+            raise ValueError("Демонстрационный драйвер: Mono8, Mono16, Raw8, Raw16")
         self.settings = replace(settings, width=width, height=height, gain=0 if settings.gain is None else settings.gain)
-        return self.settings, {"pixel_formats": ["Mono8", "Mono12", "Mono16"],
-                               "trigger_sources": ["Line1"], "gain_node": "DemoRaw",
-                               "exposure_us": {"min": 35, "max": 999985},
+        return self.settings, {"pixel_formats": ["Mono8", "Mono16", "Raw8", "Raw16"],
+                               "trigger_sources": ["GPI1"], "gain_node": "Demo dB",
+                               "exposure_us": {"min": 26, "max": 1000000},
                                "gain": {"min": 0, "max": 100}}
 
     def start(self):
@@ -66,10 +66,10 @@ class SimulatedCamera:
         self.last = time.monotonic()
         h, w = self.settings.height, self.settings.width
         y, x = np.ogrid[:h, :w]
-        peak = 180 if self.settings.pixel_format == "Mono8" else 3000
+        peak = 180 if self.settings.pixel_format.endswith("8") else (2**self.settings.sensor_bits-1)*0.75
         image = 20 + peak * np.exp(-((x-w/2-10*np.sin(self.counter/5))**2/(w/8)**2 + (y-h/2)**2/(h/8)**2)/2)
         image += self.rng.normal(0, 2, (h, w))
-        dtype = np.uint8 if self.settings.pixel_format == "Mono8" else np.uint16
+        dtype = np.uint8 if self.settings.pixel_format.endswith("8") else np.uint16
         return Frame(np.clip(image, 0, np.iinfo(dtype).max).astype(dtype), self.counter,
                      metadata={"backend": "simulated", "simulated": True})
 

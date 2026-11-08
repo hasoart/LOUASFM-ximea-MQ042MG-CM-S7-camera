@@ -10,10 +10,9 @@ from .models import CameraSettings, settings_dict
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_PATH = ROOT / "state" / "settings.json"
 DEFAULTS = {
-    "schema_version": 1,
-    "backend": "basler",
+    "schema_version": 2,
+    "backend": "ximea",
     "camera_serial": "",
-    "camera_ip": "",
     "camera": settings_dict(CameraSettings()),
     "recording": {"directory": str(ROOT / "captures"), "prefix": "image", "format": "TIFF"},
     "beaglebone": {"host": "192.168.1.66", "port": 9998, "channel": "D0"},
@@ -28,10 +27,10 @@ def _merge(default, saved):
 
 
 def validate_config(config):
-    if config.get("schema_version") != 1:
+    if config.get("schema_version") != 2:
         raise ValueError("Неподдерживаемая версия настроек")
     CameraSettings(**config["camera"]).validate()
-    if config["backend"] not in ("basler", "simulated"):
+    if config["backend"] not in ("ximea", "simulated"):
         raise ValueError("Неизвестный драйвер камеры")
     if config["recording"]["format"] not in ("TIFF", "PNG"):
         raise ValueError("Формат сохранения: TIFF или PNG")

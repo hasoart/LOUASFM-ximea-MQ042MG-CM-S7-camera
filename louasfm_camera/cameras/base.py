@@ -5,7 +5,7 @@ from ..models import CameraSettings, Frame
 
 class Camera(Protocol):
     def discover(self) -> list[dict]: ...
-    def open(self, serial: str = "", ip: str = "") -> dict: ...
+    def open(self, serial: str = "") -> dict: ...
     def configure(self, settings: CameraSettings) -> tuple[CameraSettings, dict]: ...
     def start(self): ...
     def read(self, timeout_ms: int = 100) -> Frame | None: ...
@@ -15,9 +15,9 @@ class Camera(Protocol):
 
 
 def create_camera(backend):
-    if backend == "basler":
-        from .basler import BaslerCamera
-        return BaslerCamera()
+    if backend == "ximea":
+        from .ximea_camera import XimeaCamera
+        return XimeaCamera()
     if backend == "simulated":
         from .simulated import SimulatedCamera
         return SimulatedCamera()

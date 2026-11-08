@@ -5,7 +5,7 @@ import logging
 
 from PySide6.QtCore import QObject, Qt, QTimer, Signal, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QFormLayout,
                               QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
                               QPushButton, QScrollArea, QSpinBox, QSplitter, QTabWidget,
                               QTextEdit, QVBoxLayout, QWidget)
@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QFileDialog, QForm
 from ..config import ROOT
 from ..services.acquisition import AcquisitionService
 from ..services.beaglebone import BoardClient
-from .camera_panel import CameraPanel, ForceIPDialog
+from .camera_panel import CameraPanel
 from .image_view import ImageView
 from .pulse_view import PulseView
 
@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         self.closing = False
         self.last_frame = None
         self.latest_path = ""
-        self.setWindowTitle("LOUASFM · Basler acA2500-14gm")
+        self.setWindowTitle("LOUASFM · XIMEA MQ042MG-CM-S7")
         self.resize(1400, 950)
         self.service = AcquisitionService(config["backend"], self)
         self.board_signals = BoardSignals(self)
@@ -78,7 +78,7 @@ class MainWindow(QMainWindow):
         help_menu = self.menuBar().addMenu("Справка")
         help_menu.addAction("Инструкция (рус.)", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(ROOT/'docs/START_HERE.html'))))
         help_menu.addAction("Особенности камеры", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(ROOT/'docs/CAMERA.md'))))
-        help_menu.addAction("Официальная документация Basler", lambda: QDesktopServices.openUrl(QUrl("https://docs.baslerweb.com/aca2500-14gm")))
+        help_menu.addAction("Официальная документация XIMEA", lambda: QDesktopServices.openUrl(QUrl("https://www.ximea.com/support/wiki/apis/XiAPI_Python_Manual")))
         self._connect_signals()
         self.timer = QTimer(self)
         self.timer.setInterval(100)
@@ -162,7 +162,6 @@ class MainWindow(QMainWindow):
         self.camera.connect_button.clicked.connect(self.connect_camera)
         self.camera.disconnect_button.clicked.connect(lambda: self.issue("disconnect"))
         self.camera.apply.clicked.connect(self.apply_camera)
-        self.camera.force_ip.clicked.connect(self.force_ip)
         self.start_button.clicked.connect(self.start_capture)
         self.stop_button.clicked.connect(lambda: self.issue("stop"))
         self.snap_button.clicked.connect(self.take_snapshot)
@@ -193,7 +192,7 @@ class MainWindow(QMainWindow):
             settings = self.camera.settings()
             data = copy.deepcopy(self.config)
             data.update(backend=self.camera.backend.currentData(), camera_serial=self.camera.serial.text().strip(),
-                        camera_ip=self.camera.ip.text().strip(), camera=settings.__dict__.copy())
+                        camera=settings.__dict__.copy())
             output = self.output()
             if not output["directory"]:
                 raise ValueError("Выберите каталог снимков")
@@ -222,7 +221,7 @@ class MainWindow(QMainWindow):
         if self.persist():
             self.camera.connect_button.setEnabled(False)
             self.issue("connect", backend=self.camera.backend.currentData(), serial=self.camera.serial.text().strip(),
-                       ip=self.camera.ip.text().strip(), settings=self.camera.settings())
+                       settings=self.camera.settings())
 
     def apply_camera(self):
         if self.persist():
@@ -243,7 +242,7 @@ class MainWindow(QMainWindow):
         self.message(f"Найдено камер: {len(devices)}")
 
     def camera_connected(self, info):
-        self.camera.description.setText(f"{info['model']} / SN {info['serial']} / {info.get('ip', '')}")
+        self.camera.description.setText(f"{info['model']} / SN {info['serial']} / {info.get('transport', 'USB3')}")
         self.message(f"Камера подключена: {info}")
 
     def settings_applied(self, settings, caps):
@@ -294,11 +293,6 @@ class MainWindow(QMainWindow):
         if folder:
             self.output_directory.setText(folder)
             self.persist()
-
-    def force_ip(self):
-        dialog = ForceIPDialog(self)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            self.issue("force_ip", **dialog.values())
 
     def connect_board(self):
         if not self.persist():
