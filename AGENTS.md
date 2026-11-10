@@ -1,7 +1,8 @@
 # Working on LOUASFM XIMEA camera
 
 This is the independent XIMEA fork of `LOUASFM-balser-acA2500-14gm-camera`,
-branched from Basler commit `f651ea4`. Preserve the sibling Basler program and
+derived from local Basler commit `f651ea4`; public history excludes legacy/vendor
+artifacts. Preserve the sibling Basler program and
 ThuliumBB unchanged. The new target, identified from the user's product link,
 is XIMEA **MQ042MG-CM-S7**, xiQ USB3, CMOSIS CMV4000 global shutter, mono.
 
@@ -15,7 +16,8 @@ is XIMEA **MQ042MG-CM-S7**, xiQ USB3, CMOSIS CMV4000 global shutter, mono.
 - Camera transport is USB3: no camera IP, ForceIP, pylon, or GigE parameters in
   the active UI or installation instructions. The BeagleBone IP/UDP remain.
 - Scope remains camera viewing, settings, snapshots, recording, ROI/profiles and
-  board monitoring. Old scanners/atom calibration stay in `legacy/` and history.
+  board monitoring. Old scanners/atom calibration stay in the original local repository.
+  `legacy/` and binary SDKs are excluded from the public repository.
 - Download references from official XIMEA sites and preserve attribution,
   source URLs and checksums. SDK/driver installation on the operator's system
   is explicit and documented, not performed by the application.

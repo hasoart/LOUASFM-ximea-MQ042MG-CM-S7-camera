@@ -3,7 +3,7 @@
 <style>body{font:17px/1.55 system-ui,sans-serif;max-width:1050px;margin:40px auto;padding:0 20px;color:#172234}pre{padding:18px;background:#edf2f7;overflow:auto}table{border-collapse:collapse;width:100%}td,th{border:1px solid #cbd5df;padding:12px;text-align:left}a{color:#0862ac}h1,h2{line-height:1.2}.notice{background:#fff2d7;border-left:5px solid #da8a00;padding:18px}</style>
 <h1>LOUASFM · XIMEA MQ042MG-CM-S7</h1>
 <p>Копия для CMOSIS CMV4000, 2048×2048, global shutter, USB3. Версия Basler сохранена отдельно. Интерфейс, снимки, запись и схема BeagleBone доступны на Windows/Linux. Для проверки без камеры есть демонстрация.</p>
-<div class="notice"><strong>До подключения аппаратного триггера:</strong> у S7 вход HIGH требует &gt;4 В и &gt;2 мА. Прямой GPIO BeagleBone 3,3 В не подходит. Нужен согласующий драйвер; 5 В на GPIO BeagleBone подавать нельзя. У стандартного S7 Binder/M5: контакт 1 — I/O GND, 3 — IN, 4 — OUT. Сверьте точную модель и рисунок в <a href="manufacturer/xiq-s7-technical-manual.pdf#page=48">официальном PDF, стр. 48–50</a>.</div>
+<div class="notice"><strong>До подключения аппаратного триггера:</strong> у S7 вход HIGH требует &gt;4 В и &gt;2 мА. Прямой GPIO BeagleBone 3,3 В не подходит. Нужен согласующий драйвер; 5 В на GPIO BeagleBone подавать нельзя. У стандартного S7 Binder/M5: контакт 1 — I/O GND, 3 — IN, 4 — OUT. Сверьте точную модель и рисунок в <a href="https://www.ximea.com/downloads/documents-downloads/xiq-s7-usb3-vision-compact-cameras_technical-manual-dwl_manual-pdf#page=48">официальном PDF, стр. 48–50</a>.</div>
 <h2>Windows: установка один раз</h2>
 <ol><li>Установите Python 3.11 x64.</li><li>Установите <a href="https://www.ximea.com/software-downloads">XIMEA Windows Software Package</a> с USB3/xiQ driver, xiAPI, <strong>xiAPI Python v3</strong>, xiCamTool и xiCOP. Оригинальный установщик также подготовлен в <code>vendor/sdk/XIMEA_Windows_SP_Stable.exe</code> отдельного архива SDK/wheels. Запустите его самостоятельно от администратора и при запросе перезагрузите Windows.</li>
 <li>Проверьте изображение в xiCamTool/xiCOP, затем закройте там захват.</li><li>В PowerShell, открытом в папке программы, выполните:</li></ol>
@@ -35,5 +35,5 @@
 <h2>Настройки и ошибки</h2>
 <p>Проверяйте «Настройки сохранены». Файлы этой копии: <code>state/settings.json</code>, демо — <code>state/demo.json</code>, SDK-путь — <code>state/ximea-sdk-path.txt</code>. Старый конфиг Basler не переносите. Ошибки — в «Журнале» и <code>state/camera.log</code>; диагностика:</p>
 <pre>.\.venv\Scripts\python.exe scripts\diagnose.py</pre>
-<p><a href="../README.md">Подробная инструкция</a> · <a href="CAMERA.md">Сенсор, GPIO и скорость</a> · <a href="BEAGLEBONE.md">BeagleBone</a> · <a href="TESTING.md">Что проверено</a> · <a href="manufacturer/xiAPI-Python-manual.html">Официальный Python manual</a>.</p>
+<p><a href="../README.md">Подробная инструкция</a> · <a href="CAMERA.md">Сенсор, GPIO и скорость</a> · <a href="BEAGLEBONE.md">BeagleBone</a> · <a href="TESTING.md">Что проверено</a> · <a href="https://www.ximea.com/support/wiki/apis/XiAPI_Python_Manual">Официальный Python manual</a>.</p>
 </html>

@@ -4,8 +4,9 @@
 [указанной странице производителя](https://www.ximea.com/products/usb-vision-industrial/xiq-usb3-compact-cmos-cameras/cmosis-cmv4000-spartan-7-usb3-mono-compact-camera).
 Сенсор CMOSIS CMV4000, 2048×2048, global shutter, интерфейс USB3.
 Версия Basler сохранена в соседней папке `LOUASFM-balser-acA2500-14gm-camera`.
-У копии своя Git-история, venv, настройки и архивы; исходный коммит ответвления
-Basler — `f651ea4`. Старые анализаторы/сканеры сохранены локально в `legacy/` для будущего
+У копии своя Git-история, venv и настройки. Публичная история содержит
+изменения приложения; полная восстановленная история и исходный проект сохранены
+локально. Файл `PUBLICATION.json` указывает исходный коммит рабочей копии. Старые анализаторы/сканеры сохранены локально в `legacy/` для будущего
 переноса и не загружаются приложением. В публичную копию они не входят.
 
 Возможности: просмотр, настройка экспозиции/усиления/ROI/формата/триггера,
@@ -25,7 +26,7 @@ Basler — `f651ea4`. Старые анализаторы/сканеры сох�
 BeagleBone. У S7 другой разъём, чем у Basler: Binder/M5, контакт 1 — I/O GND,
 3 — IN, 4 — OUT. Проверьте ориентацию по рисунку и точный суффикс камеры;
 для старого MQ042MG-CM без S7/вариантов FL распиновку нельзя переносить автоматически.
-См. [подключение](docs/CAMERA.md) и [официальный PDF, стр. 48–50](docs/manufacturer/xiq-s7-technical-manual.pdf#page=48).
+См. [подключение](docs/CAMERA.md) и [официальный PDF, стр. 48–50](https://www.ximea.com/downloads/documents-downloads/xiq-s7-usb3-vision-compact-cameras_technical-manual-dwl_manual-pdf#page=48).
 
 ## Windows: установка один раз
 
@@ -35,7 +36,7 @@ BeagleBone. У S7 другой разъём, чем у Basler: Binder/M5, кон
    xiAPI, **xiAPI Python v3**, xiCamTool и xiCOP. Проверена структура официального
    установщика LTS **4.34.00** от 28.10.2026. Скачать:
    [страница XIMEA](https://www.ximea.com/software-downloads).
-   В подготовленной рабочей копии установщик также находится в
+   В подготовленной локальной рабочей копии (не в GitHub) установщик находится в
    `vendor/sdk/XIMEA_Windows_SP_Stable.exe`; он включается в отдельный архив
    SDK и wheels. Запустите его от администратора, примите условия производителя
    и при запросе перезапустите Windows. Приложение само драйверы не устанавливает.
@@ -106,7 +107,7 @@ python3.11 -m venv .venv
 Для физической камеры нужен официальный **XIMEA Linux Software Package**
 для **Linux x86 / x86_64**, не ARM. Скачать:
 [страница производителя](https://www.ximea.com/software-downloads).
-В этой рабочей копии архив `vendor/sdk/XIMEA_Linux_SP.tgz` и распакованный
+В локальной подготовленной копии архив `vendor/sdk/XIMEA_Linux_SP.tgz` и распакованный
 `vendor/sdk/extracted/package/` уже есть. На новом компьютере подготовьте их
 из корня проекта:
 

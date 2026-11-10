@@ -75,3 +75,10 @@ temp_photos/
 vendor/wheels/
 artifacts/
 vendor/sdk/
+
+# Optional downloaded manufacturer reference snapshots remain local.
+docs/manufacturer/*.html
+docs/manufacturer/*.pdf
+docs/manufacturer/manifest.json
+docs/manufacturer/XIMEA-SDK-LICENSE.txt
+*.dylib

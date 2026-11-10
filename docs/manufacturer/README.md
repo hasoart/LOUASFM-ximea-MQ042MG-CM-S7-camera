@@ -1,37 +1,19 @@
-# Официальные материалы XIMEA
+# Ссылки на официальные материалы XIMEA
 
-Файлы получены 08.11.2026 с официального сайта XIMEA; документация на
-исходном английском языке. Правообладатель — XIMEA. Исходные адреса, время,
-размеры и SHA-256 указаны в `manifest.json`.
+В публичный GitHub включены код приложения, тесты и собственные инструкции.
+Полные снимки внешней документации, SDK/драйверы и старый проект не публикуются.
+Ниже прямые ссылки на первоисточники. По желанию загрузите offline-копии
+командой `.venv/bin/python scripts/fetch_manufacturer_docs.py`; файлы попадут
+в ignored `docs/manufacturer/`.
 
-- [Страница точной модели MQ042MG-CM-S7](MQ042MG-CM-S7.html).
-- [Полный technical manual xiQ-S7, PDF, v260902](xiq-s7-technical-manual.pdf),
-  101 страница. Модель/сенсор: стр. 25; скорость: стр. 33; Binder pinout:
-  стр. 48; электрические требования GPI: стр. 50.
-- [xiAPI Python manual](xiAPI-Python-manual.html).
-- [xiAPI parameter manual](xiAPI-manual.html).
-- [Trigger and synchronization signals](trigger-and-synchronization.html).
-- [Windows Software Package](windows-software-package.html),
-  [Linux Software Package](linux-software-package.html).
-- [Python/Windows installation](python-windows-installation.html),
-  [Python/Linux installation](python-linux-installation.html).
-- [Страница текущих загрузок](software-downloads.html).
-- [Лицензия официального SDK](XIMEA-SDK-LICENSE.txt), сохранена без изменений
-  из скачанного Linux SDK 4.34.00.
-
-PDF полностью доступен без сети. В HTML сохранён текст исходной страницы,
-удалены исполняемые скрипты/формы, ссылки сделаны абсолютными. Внешние картинки,
-стили и переходы могут требовать интернет. Для электрического подключения
-используйте именно PDF S7 и рисунок разъёма, не только общее описание семейства.
-
-Обновить reference snapshots:
-
-```bash
-.venv/bin/python scripts/fetch_manufacturer_docs.py
-```
-
-Загрузчик использует urllib, а при отказе сервера — установленный curl.
-Обновление внешних материалов и manifest желательно делать отдельным
-коммитом. Код/библиотеки производителя не патчатся. Native SDK EXE/TGZ не
-входят в Git; установщик и Python wheels поставляются отдельным архивом.
-Условия производителя не заменяются лицензией приложения.
+- [MQ042MG-CM-S7.html](https://www.ximea.com/products/usb-vision-industrial/xiq-usb3-compact-cmos-cameras/cmosis-cmv4000-spartan-7-usb3-mono-compact-camera)
+- [xiAPI-Python-manual.html](https://www.ximea.com/support/wiki/apis/XiAPI_Python_Manual)
+- [xiAPI-manual.html](https://www.ximea.com/support/wiki/apis/XiAPI_Manual)
+- [trigger-and-synchronization.html](https://www.ximea.com/support/wiki/apis/XiAPI_Camera_Trigger_and_Synchronization_Signals)
+- [windows-software-package.html](https://www.ximea.com/support/wiki/apis/XIMEA_Windows_Software_Package)
+- [linux-software-package.html](https://www.ximea.com/support/wiki/apis/XIMEA_Linux_Software_Package)
+- [python-windows-installation.html](https://www.ximea.com/support/wiki/apis/Python_inst_win)
+- [python-linux-installation.html](https://www.ximea.com/support/wiki/apis/Python_inst_linux)
+- [software-downloads.html](https://www.ximea.com/software-downloads)
+- [xiq-s7-technical-manual.pdf](https://www.ximea.com/downloads/documents-downloads/xiq-s7-usb3-vision-compact-cameras_technical-manual-dwl_manual-pdf)
+- [XIMEA-SDK-LICENSE.txt](https://www.ximea.com/attachment/Linux-SP-Stable.tgz)

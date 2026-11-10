@@ -1,0 +1,26 @@
+{
+  "source_commit": "2e3a98abec94b8dcb2a2b105c4f4d2896febab3a",
+  "scope": "Application, tests and project documentation; local legacy, vendor binaries, downloaded reference snapshots and runtime files excluded",
+  "application_sha256": {
+    "louasfm_camera/config.py": "034950189c7d23b894677a06b35b98a98d78aead7cda0ad680dc418dc8c5907b",
+    "louasfm_camera/sdk_runtime.py": "d1493ad32dca21065a3bd2adad8a9f4a40cf74c4b48f4a9be2ddb7e9b9dce615",
+    "louasfm_camera/__main__.py": "36b5a27d5d539a7c38f378c1e12a10d3f14f453cb2d1fbc31668bc85d5319d9c",
+    "louasfm_camera/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "louasfm_camera/models.py": "b59a610882853452675262e35229d775e7b890b5ba3543f4b154cd34ec192c3a",
+    "louasfm_camera/app.py": "2cae072edbbff4cb4058ff7622471c4825ef3179fcf6ca2373658d6fd78d065d",
+    "louasfm_camera/ui/image_view.py": "76b429279c1e6d0b735453dfdcf6665ba54c37057220728151195ea1f89259bf",
+    "louasfm_camera/ui/pulse_view.py": "48e604c18bf3f6aae6704a58dd6a60839acf397f0ed4fe5593e12599424ddac9",
+    "louasfm_camera/ui/camera_panel.py": "7dae520ea4567a390d77eb46f8b2e394f2420053448f9acd08b6c7e5b2467d14",
+    "louasfm_camera/ui/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "louasfm_camera/ui/main_window.py": "8b8ebceb022385d418cb2e31862c7e6828b5e4fde272c49df885cd6cf6f0ae30",
+    "louasfm_camera/cameras/ximea_camera.py": "ee449b50d001bf78e0bffba823ba77bb7e02834b9579669c3a313377d106fb20",
+    "louasfm_camera/cameras/base.py": "0673bf134496ab28211553957913a702122e3555d987c569dd247f1629bdbd03",
+    "louasfm_camera/cameras/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "louasfm_camera/cameras/simulated.py": "3b4259d6e0734c3cedc2d9df17bf5ccdcd7124148c8939e6bea347d9d3619139",
+    "louasfm_camera/services/storage.py": "2811f0741b17d07f960bfa102bc1e8e31fbc1b8ec2170466fa327e7838dded88",
+    "louasfm_camera/services/acquisition.py": "db39a51355bfa65e0fef6c99fc9aedf616a3b846c850f5d59dea288f41bdff63",
+    "louasfm_camera/services/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "louasfm_camera/services/analysis.py": "f7c5a546afd5bedfeb2fb8d9500c8fcd03325362a75c20618410d14cca45b67e",
+    "louasfm_camera/services/beaglebone.py": "37c65646cff0d598ad06767ab902c8a63cfbc13a1b0b6a9793bbe4d832d5e024"
+  }
+}

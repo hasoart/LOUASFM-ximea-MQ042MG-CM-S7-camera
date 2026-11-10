@@ -1,7 +1,7 @@
 # XIMEA MQ042MG-CM-S7: особенности для этого опыта
 
 Источник — [страница указанной модели](https://www.ximea.com/products/usb-vision-industrial/xiq-usb3-compact-cmos-cameras/cmosis-cmv4000-spartan-7-usb3-mono-compact-camera)
-и [официальный technical manual xiQ-S7 v260902](manufacturer/xiq-s7-technical-manual.pdf).
+и [официальный technical manual xiQ-S7 v260902](https://www.ximea.com/downloads/documents-downloads/xiq-s7-usb3-vision-compact-cameras_technical-manual-dwl_manual-pdf).
 Проверено 08.11.2026. Суффикс **S7** существенен: это не универсальная
 распиновка всех камер с CMV4000.
 

@@ -13,7 +13,7 @@ LTS 4.34.00. Python-библиотеки GUI отделены в requirements.tx
 2. Запустить установщик от администратора. Выбрать USB3/xiQ camera drivers,
    xiAPI, **xiAPI Python v3**, xiCamTool, xiCOP. Установщик имеет собственную
    лицензию, сохранённую также в
-   [XIMEA-SDK-LICENSE.txt](manufacturer/XIMEA-SDK-LICENSE.txt).
+   [XIMEA-SDK-LICENSE.txt](https://www.ximea.com/attachment/Linux-SP-Stable.tgz).
 3. При запросе перезагрузить Windows. Подключить камеру к USB3; убедиться, что
    xiCOP и xiCamTool её видят. После проверки закрыть захват в этих утилитах.
 4. Создать venv Python 3.11 x64 и установить requirements.txt, как в README.
