@@ -5,12 +5,14 @@
 Сенсор CMOSIS CMV4000, 2048×2048, global shutter, интерфейс USB3.
 Версия Basler сохранена в соседней папке `LOUASFM-balser-acA2500-14gm-camera`.
 У копии своя Git-история, venv, настройки и архивы; исходный коммит ответвления
-Basler — `f651ea4`. Старые анализаторы/сканеры остаются в `legacy/` для будущего
-переноса и не загружаются приложением.
+Basler — `f651ea4`. Старые анализаторы/сканеры сохранены локально в `legacy/` для будущего
+переноса и не загружаются приложением. В публичную копию они не входят.
 
 Возможности: просмотр, настройка экспозиции/усиления/ROI/формата/триггера,
 одиночный снимок, серия TIFF/PNG с JSON, ROI анализа и профили, наблюдение
 схемы текущего ThuliumBB по UDP 9998. Есть демонстрация без SDK и камеры.
+10.11.2026 пользователь подтвердил работу большей части функций на стенде XIMEA;
+полная аппаратная проверка всех режимов ещё не завершена.
 [Инструкция в браузере](docs/START_HERE.html), [особенности камеры](docs/CAMERA.md),
 [SDK и драйверы](docs/SDK_SETUP.md), [проверки](docs/TESTING.md).
 
@@ -101,21 +103,47 @@ python3.11 -m venv .venv
 .venv/bin/python -m louasfm_camera --demo
 ```
 
-Для реальной камеры установите официальный **XIMEA Linux Software Package**
-по [инструкции производителя](https://www.ximea.com/support/wiki/apis/XIMEA_Linux_Software_Package),
-включая native-библиотеки, правила доступа к USB и Python-модуль. Затем:
+Для физической камеры нужен официальный **XIMEA Linux Software Package**
+для **Linux x86 / x86_64**, не ARM. Скачать:
+[страница производителя](https://www.ximea.com/software-downloads).
+В этой рабочей копии архив `vendor/sdk/XIMEA_Linux_SP.tgz` и распакованный
+`vendor/sdk/extracted/package/` уже есть. На новом компьютере подготовьте их
+из корня проекта:
 
 ```bash
-.venv/bin/python scripts/configure_ximea_sdk.py --sdk-root /opt/XIMEA --check
+mkdir -p vendor/sdk/extracted
+curl -fL https://www.ximea.com/attachment/Linux-SP-Stable.tgz -o vendor/sdk/XIMEA_Linux_SP.tgz
+tar -xzf vendor/sdk/XIMEA_Linux_SP.tgz -C vendor/sdk/extracted
+```
+
+Установите native SDK и правила доступа к USB штатным установщиком, который
+сам запросит sudo. Это отдельная операция от установки Python requirements:
+
+```bash
+(cd vendor/sdk/extracted/package && ./install)
+sudo gpasswd -a "$USER" plugdev
+```
+
+После добавления в группу выйдите из пользовательского сеанса и войдите снова,
+переподключите камеру к USB3. Затем, из папки приложения:
+
+```bash
+.venv/bin/python scripts/configure_ximea_sdk.py --sdk-root vendor/sdk/extracted/package --check
 .venv/bin/python -m louasfm_camera
 ```
 
-Уточните фактическую папку установки; `/opt/XIMEA` — стандартный вариант.
-Официальный Python SDK 4.34 на Linux загружает `/usr/lib/libm3api.so.2`:
-одной распаковки архива в venv недостаточно. Файлы производителя программа
-не патчит. На этом компьютере системный SDK не устанавливался: проверена
-загрузка native-библиотеки напрямую и перечисление устройств, а GUI работает
-без неё через демонстрационный драйвер.
+Здесь SDK-путь намеренно указывает на распакованный официальный пакет:
+установщик 4.34 копирует Python-модуль в site-packages системного Python,
+который может отличаться от Python 3.11 в venv. В `/opt/XIMEA` Python-модуля
+после этой установки может не быть. Native-библиотека SDK загружается по пути
+`/usr/lib/libm3api.so.2`, а xiArrOps.so — относительно официального Python-пакета.
+Файлы производителя программа не патчит.
+
+На этом ноутбуке Arch Linux Python-зависимости уже установлены, GUI проверен.
+Системный XIMEA SDK пока не устанавливался, пользователь пока не в plugdev.
+Arch не входит в опубликованный список проверенных XIMEA дистрибутивов, хотя
+native-библиотека SDK здесь успешно загрузилась и перечислила 0 устройств.
+Инструкция производителя: [Linux SDK](https://www.ximea.com/support/wiki/apis/XIMEA_Linux_Software_Package).
 
 Для Qt/xcb на Ubuntu могут понадобиться `libxcb-cursor0`,
 `libxkbcommon-x11-0`, `libegl1`; PySide6 6.12 требует современный Linux
